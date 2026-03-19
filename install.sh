@@ -39,7 +39,7 @@ cp scripts/*.sh /opt/lexicon/scripts/ 2>/dev/null || true
 # setting permission, 755 for executable, 700 to only directory owner
 chmod 755 /opt/lexicon/
 chmod 755 /opt/lexicon/*.sh
-chmod 700 /opt/lexicon/sessions
+chmod 755 /opt/lexicon/sessions
 chmod 755 /opt/lexicon/scripts
 chmod 755 /opt/lexicon/scripts/*.sh
 
