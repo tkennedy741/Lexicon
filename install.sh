@@ -29,9 +29,12 @@ mkdir -p /opt/lexicon/
 mkdir -p /opt/lexicon/sessions
 mkdir -p /opt/lexicon/scripts
 
+# Get User
+INSTALL_USER=${SUDO_USER:-$(whoami)}
+
 echo "[X] Installing Scripts... [X]"
 cp bin/lexicon.sh /usr/local/bin/lexicon
-cp systemd/lexicon.service /etc/systemd/system/
+sed "s/__LEXICON_USER__/$INSTALL_USER/" systemd/lexicon.service > /etc/systemd/system/lexicon.service
 cp bin/socat.sh /opt/lexicon/
 cp bin/handler.sh /opt/lexicon/
 cp scripts/*.sh /opt/lexicon/scripts/ 2>/dev/null || true
@@ -47,6 +50,8 @@ echo "[X] Starting services... [X]"
 systemctl daemon-reload
 systemctl start lexicon.service
 systemctl enable lexicon.service
+
+chown -R "$INSTALL_USER":"$INSTALL_USER" /opt/lexicon/
 
 
 #Add controller script to $PATH

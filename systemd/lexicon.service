@@ -6,6 +6,7 @@ Wants=network.target
 
 [Service]
 Type=simple
+User=__LEXICON_USER__
 WorkingDirectory=/opt/lexicon
 # Run as user, execute socat.sh
 ExecStart=/opt/lexicon/socat.sh
