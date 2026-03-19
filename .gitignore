@@ -1,0 +1,15 @@
+# system / runtime artifacts
+sessions/
+keydump/
+
+# temp / editor
+*.swp
+*.tmp
+*~
+
+# python leftovers (just in case)
+__pycache__/
+*.pyc
+
+# logs
+*.log

