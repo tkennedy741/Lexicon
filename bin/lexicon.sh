@@ -60,12 +60,7 @@ scripts(){
 		fi
 		echo "Executing $script_path on session $PTYPATH"
 
-		payload=$(cat <<EOF
-bash -s << 'EOF_REMOTE'
-$(cat "$script_path")
-EOF_REMOTE
-EOF
-)
+		payload="bash -c '$(sed "s/'/'\\\\''/g" "$script_path")'"
 		send_and_collect "$payload"
 	fi
 }
@@ -84,6 +79,8 @@ send_and_collect(){
         local per_read="$PER_READ_TIMEOUT"
         local overall="$OVERALL_TIMEOUT"
         local start now elapsed line
+
+	# printf '\003' > "$PTYPATH" # Ctrl+C
 
 	if [ -z "${PTYPATH:-}" ] || [ ! -e "$PTYPATH" ]; then
 		echo "No PTYPATH selected or file doesn't exist."
@@ -174,6 +171,17 @@ while read -r cmd; do
         case "$cmd" in
                 /send\ *)
                         payload=${cmd#'/send '}
+						# Handle dangerous commands with a timeout to prevent hanging the controller
+						# pipe through head to batch output instead of flooding controller with many line outputs
+						case "$payload" in
+							ping*)
+								target=${payload#ping }
+								payload="ping -c 10 $target | head -n 50"
+								;;
+							top*|tail*|watch*)
+								payload="timeout 5s $payload | head -n 50"
+								;;
+						esac
                         send_and_collect "$payload"
                         ;;
 		/list)
