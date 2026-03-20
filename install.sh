@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-if [ ! -d /opt/lexicon &&  ! -d /etc/systemd/system/lexicon.service ]; then
+if [ ! -d /opt/lexicon ] && [ ! -f /etc/systemd/system/lexicon.service ]; then
 	echo "Installing Lexicon..."
 
 
