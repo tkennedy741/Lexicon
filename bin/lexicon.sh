@@ -112,6 +112,31 @@ send_and_collect(){
 
 }
 
+kill_session() {
+	if [ -z "${PTYPATH:-}" ] || [ ! -e "$PTYPATH" ]; then
+		echo "No PTYPATH selected or file doesn't exist."
+		return 1
+	fi
+	real_pty=$(readlink -f "$PTYPATH")
+	echo "Killing session at $PTYPATH..."
+
+	if command -v fuser >/dev/null; then
+		fuser -k "$real_pty" 2>/dev/null || true
+	else
+		echo "fuser not found, attempting kill by finding process with open handle to $real_pty"
+		pid=$(lsof -t "$real_pty" 2>/dev/null | head -n1)
+		if [ -n "$pid" ]; then
+			kill -9 "$pid"
+			echo "Killed process $pid holding $real_pty"
+		else
+			echo "No process found holding $real_pty. It may have already exited."
+		fi
+	fi
+
+	rm -f "$PTYPATH"
+	echo "Session terminated"
+}
+
 list_sessions() {
 	clear_sessions
 	echo "Available Sessions (most recent first):"
@@ -164,8 +189,8 @@ if ! choose_session; then
 	echo "No session chosen; exiting."
 	exit 1
 fi
-echo "Now interacting with session:$PTYPATH"
-echo -e "Commands: /send <text>\n /list (show sessions)\n /switch (choose another)\n /script [name]\n /quit"
+echo "\n\nNow interacting with session:$PTYPATH"
+echo -e "Commands:\n /send <text>\n /list (show sessions)\n /switch (choose another)\n /script [name]\n /quit"
 
 while read -r cmd; do
         case "$cmd" in
@@ -201,16 +226,17 @@ while read -r cmd; do
 		/script)
 			scripts
 			;;
-		/read)
-			if read -r -t 0.2 line < "$PTYPATH"; then
-				echo "REMOTE> $line"
-			else
-				echo "(no data)"
-			fi
-			;;
 		/quit)
 			echo "bye"
 			break
+			;;
+		/kill)
+			read -p "Are you sure you want to kill the current session? Target will need to reconnect (y/N)" confirm
+			if [[ "$confirm" =~ ^[Yy]$ ]]; then
+				kill_session
+			else
+				echo "Kill cancelled."
+			fi
 			;;
 		*)
 			echo "Invalid command!"
