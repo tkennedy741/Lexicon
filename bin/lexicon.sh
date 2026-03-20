@@ -37,7 +37,7 @@ networkScan(){
 
 scripts(){
 	if [ -z "$1" ]; then
-		echo "Available scripts:"
+		echo -e "\nAvailable scripts:\n\n"
 		for item in /opt/lexicon/scripts/*; do
 			# check that folder exists and is not empty
 			[ -e "$item" ] || continue
@@ -190,7 +190,7 @@ if ! choose_session; then
 	exit 1
 fi
 echo "\n\nNow interacting with session:$PTYPATH"
-echo -e "Commands:\n /send <text>\n /list (show sessions)\n /switch (choose another)\n /script [name]\n /quit"
+echo -e "Commands:\n /send <text>\n /list (show sessions)\n /switch (choose another)\n /script [name]\n /kill (kill current session)\n /quit"
 
 while read -r cmd; do
         case "$cmd" in
