@@ -14,19 +14,38 @@ if [ ! -d /opt/lexicon ] && [ ! -f /etc/systemd/system/lexicon.service ]; then
 
 
 	echo -e "\n\n[X] Installing Dependencies... [X]"
-	apt-get update
-	if ! command -v socat &> /dev/null 2>&1;
+
+	# Detect package manager
+
+	if command -v apt-get >/dev/null 2>&1; then
+		INSTALLER="apt-get"
+	elif command -v yum >/dev/null 2>&1; then
+		INSTALLER="yum"
+	else
+		echo "No supported package manager found. (apt-get or yum)"
+		exit 1
+	fi
+
+	# Update Repos
+
+	if [ "$INSTALLER" = "apt-get" ]; then
+		apt-get update
+	elif [ "$INSTALLER" = "yum" ]; then
+		yum makecache
+	fi
+
+	if ! command -v socat >/dev/null 2>&1;
 	then
 		echo "Installing socat..."
 
-		apt-get install -y socat
+		$INSTALLER install -y socat
 	fi
 
-	if ! command -v nmap &> /dev/null 2>&1;
+	if ! command -v nmap >/dev/null 2>&1;
 	then
 		echo "Installing nmap..."
 
-		apt-get install -y nmap
+		$INSTALLER install -y nmap
 	fi
 
 	mkdir -p /opt/lexicon/
