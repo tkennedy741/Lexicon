@@ -89,7 +89,7 @@ Additionally, Lexicon supports a **modular script system**, allowing you to exec
 Clone the repository and run the installer:
 
 ```bash
-git clone git@github.com:<your-username>/lexicon.git
+git clone git@github.com/tkennedy741/lexicon.git
 cd lexicon
 sudo ./install.sh
 ```
